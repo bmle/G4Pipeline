@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject
+# GplexProject: NearestAnnot.py
 # Given a GFF file of G-quadruplexes and a GFF file of annotations, finds the
 # nearest annotation to each Gplex
 # =============================================================================
@@ -15,7 +15,7 @@ def generate(gplexPath, annotPath, dataPath):
 	"""
 	import math
 	from operator import itemgetter
-	from GFFLoader import load
+	from GFF import load
 	print('Generating data file...')
 	
 	# Loads files into memory
@@ -26,12 +26,7 @@ def generate(gplexPath, annotPath, dataPath):
 	# Prepares list of closest ORFs
 	orfListData = []
 	orfListHeaders = [['gplex-id', 'seq-id', 'start', 'end', 'gplex strand', 'closest annot', 'location', 'gplex start', 'annot end', 'distance (bp)', 'annot strand']]
-	
-	# Extracts sequence-regions
-	seqregs = []
-	for line in annot:
-		if line[0].startswith('##sequence-region'):	seqregs.append(line[0].split(' ')[1])
-	
+
 	# Iterate over all gplex entries
 	print('Calculating stats for each G-quadruplex...')
 	gen = (line for line in gplex if len(line) == 9)
@@ -44,9 +39,9 @@ def generate(gplexPath, annotPath, dataPath):
 		
 		# Calculates distance to the nearest annotation
 		minDist = math.inf
-		pos = '?'
-		orfid = '?'
-		orfStrand = '?'
+		pos = 'n/a'
+		annotid = 'n/a'
+		annotStrand = 'n/a'
 
 		for annotLine in annot:
 			if annotLine[0] == seqid:
@@ -60,18 +55,21 @@ def generate(gplexPath, annotPath, dataPath):
 				if abs(val) < abs(minDist):
 					minDist = val
 					pos = key
-					orfid = annotLine[8][0][3:]
-					orfStrand = annotLine[6]
+					annotid = annotLine[8][0][3:]
+					annotStrand = annotLine[6]
 		temp = pos.split('-')
-	
+		
 		# Calculates location relative to its nearest annotation
-		if temp[0] == temp[1]: location = 'Overlap'
+		if temp[0] == 'n/a':
+			location = 'n/a (no annotations on this sequence)'
+			temp.append('n/a')
+		elif temp[0] == temp[1]: location = 'Overlap'
 		elif temp[0] == '3\'' and temp[1] == '5\'' and minDist > 0: location = 'Upstream'
 		elif temp[0] == '5\'' and temp[1] == '3\'' and minDist < 0: location = 'Downstream'
 		else: location = 'Overlap'
 
 		# Appends nearest annot for this g-plex to the list of annot information
-		orfListData.append([ID, seqid, start, end, strand, orfid, location, temp[0], temp[1], minDist, orfStrand])
+		orfListData.append([ID, seqid, start, end, strand, annotid, location, temp[0], temp[1], minDist, annotStrand])
 	
 	# Writes orfList to output file
 	print('Writing to file...')
@@ -82,13 +80,15 @@ def generate(gplexPath, annotPath, dataPath):
 	print('Finished generating data file!\n')
 	
 
-def summarize(dataPath, summaryPath):
+def summarize(dataPath,annotPath, summaryPath):
 	"""Generate summary statistics for the data file previously written.
 	
 	:param dataPath: the absolute path to the data file generated beforehand
+	:param annotPath: the absolute path to the GFF-formatted genome annotation file
 	:param summaryPath: the absolute path to where the summary file should be written
 	:return: nothing
 	"""
+	from GFF import loadSeqregs
 	print('Generating summary file...')
 	
 	print('Loading data...')
@@ -99,10 +99,12 @@ def summarize(dataPath, summaryPath):
 			temp = line.split()
 			temp[9] = int(temp[9])
 			data.append(temp)
+		
+	# Extracts sequence-regions
+	seqregs = sorted([line.split(' ')[1] for line in loadSeqregs(annotPath)])
 	
-	# Separates contents based on seqid
+	# Separates contents based on sequence regions
 	dictlol = {}
-	seqregs = sorted(set(list(zip(*data))[1]))
 	for seq in seqregs:	dictlol[seq] = [row for row in data if row[1] == seq]
 	
 	# Writes to file
@@ -149,6 +151,7 @@ def summarize(dataPath, summaryPath):
 		# Writes everything
 		header = 'Strandedness of G-quadruplexes:'
 		writer(sumFile, header, toWrite)
+		sumFile.write('\n')
 		
 		# ---------------------------------------------------------------------
 		# Calculates average distance to nearest annotation
@@ -159,40 +162,50 @@ def summarize(dataPath, summaryPath):
 		count = 0
 		
 		# Calculates averages for each sequence
+		def mean(a): return round(sum(map(abs, a)) / len(a), 2)
 		for key, value in dictlol.items():
-			def mean(a): return round(sum(map(abs, a)) / len(a), 2)
-			tempList = list(zip(*[item for item in value if item[6]!='Overlap']))
-			if not tempList: distances.append([key+':', 'n/a'])
+			if not value:
+				distances.append([key + ':', 'n/a (no g-quadruplexes on this sequence)'])
 			else:
-				distances.append([key+':', str(mean(tempList[9]))])
-				sumAll += sum(map(abs, tempList[9]))
-				count += len(tempList[9])
+				naList = list(zip(*[item for item in value if item[6] == 'n/a']))
+				if naList:
+					distances.append([key+':', 'n/a (no annotations for this sequence)'])
+				else:
+					tempList = list(zip(*[item for item in value if item[6]!='Overlap']))
+					if not tempList:
+						distances.append([key+':', 'n/a (no non-overlapping g-quadruplexes)'])
+					else:
+						distances.append([key+':', str(mean(tempList[9]))])
+						sumAll += sum(map(abs, tempList[9]))
+						count += len(tempList[9])
 		
 		# Calculates average across all sequences
-		distances.insert(0, ['All sequences:', str(round(sumAll/count,2))])
+		distances.insert(0, ['All sequences:', str(round(sumAll/count,2)) +  ' bp'])
 		
-		# Prints everything
+		# Writes everything
 		width = [max(len(str(x))+1 for x in col) for col in zip(*distances)]
 		sumFile.write('Average distance to nearest annotation (excluding overlapping g-plexes):\n')
-		for row in distances: sumFile.write('\t' + row[0].ljust(width[0]) + row[1] + ' bp\n')
+		for row in distances: sumFile.write('\t' + row[0].ljust(width[0]) + row[1] + '\n')
 		sumFile.write('\n')
 		
 		# ---------------------------------------------------------------------
 		# Calculates relative locations of G-quadruplexes
 		# ---------------------------------------------------------------------
 		print('Calculating relative locations of G-quadruplexes...')
-		locs = ['Upstream', 'Overlap', 'Downstream']
+		locs = ['Upstream', 'Overlap', 'Downstream', 'n/a']
 		toWrite = []
-		sumAll = [0, 0, 0]
+		sumAll = [0 for _ in locs]
 		
 		# Calculates locations for each sequence
 		for key, value in dictlol.items():
 			counts = [sum(1 for x in value if x[6] == loc) for loc in locs]
-			for i, loc in enumerate(locs): sumAll[i] += counts[i]
 			tempSum = sum(counts)
+			for i in range(len(locs)): sumAll[i] += counts[i]
 			
 			if tempSum == 0:
 				toWrite.append([key+':', 'n/a (no G-quadruplexes in this sequence)', '', '', ''])
+			elif counts[3] > 0:
+				toWrite.append([key+':', 'n/a (no annotations in this sequence)', '', '', ''])
 			else:
 				percents = [str(round(count / tempSum * 100, 2)) for count in counts]
 				toWrite.append([key+':', 'Upstream:  ', str(counts[0]), str(tempSum), percents[0]])
@@ -202,6 +215,7 @@ def summarize(dataPath, summaryPath):
 		# Calculates locations for all sequences
 		sumTotal = sum(sumAll)
 		percents = [str(round(count / sumTotal * 100, 2)) for count in sumAll]
+		toWrite.insert(0, ['               ', 'n/a:       ', str(sumAll[3]), str(sumTotal), percents[3]])
 		toWrite.insert(0, ['               ', 'Downstream:', str(sumAll[2]), str(sumTotal), percents[2]])
 		toWrite.insert(0, ['               ', 'Overlap:   ', str(sumAll[1]), str(sumTotal), percents[1]])
 		toWrite.insert(0, ['All sequences: ', 'Upstream:  ', str(sumAll[0]), str(sumTotal), percents[0]])
@@ -210,8 +224,9 @@ def summarize(dataPath, summaryPath):
 		# Writes everything
 		# ---------------------------------------------------------------------
 		print('Writing to file...')
-		header = 'Locations of G-quadruplexes relative to their nearest ORFs:'
+		header = 'Locations of G-quadruplexes relative to their nearest annotations:'
 		writer(sumFile, header, toWrite)
+	
 	print('Finished generating summary file!\n')
 
 
@@ -221,6 +236,7 @@ def writer(fileObj, header, lol):
 	:param fileObj: the fileObj to write to
 	:param header: a header that should be written at the top of fileObj
 	:param lol: the data to write to fileObj
+		Takes the form of [sequence, category, amount, total, percentage]
 	:return: nothing
 	"""
 	
@@ -228,21 +244,20 @@ def writer(fileObj, header, lol):
 	fileObj.write(header + '\n')
 	for row in lol:
 		fileObj.write('\t' + row[0].ljust(width[0]) + row[1])
-		if not str(row[1]).startswith('n/a'): fileObj.write(row[2].rjust(width[2]+1) + ' /' + row[3].rjust(width[3]) + ' (' + row[4] + '%)')
+		if not str(row[1]).startswith('n/a ('): fileObj.write(row[2].rjust(width[2]+1) + ' /' + row[3].rjust(width[3]) + ' (' + row[4] + '%)')
 		fileObj.write('\n')
-	fileObj.write('\n')
 	
 # =============================================================================
 
 if __name__ == '__main__':
 	import sys
 	generate(sys.argv[1], sys.argv[2], sys.argv[3])
-	summarize(sys.argv[3], sys.argv[4])
+	summarize(sys.argv[3], sys.argv[2], sys.argv[4])
 	
 	# For local testing purposes
 	# from Paths import path
 	# strs = path('NearestAnnot-ORFs')
 	# strs = path('NearestAnnot-NALs')
 	# generate(strs[0], strs[1], strs[2])
-	# summarize(strs[2], strs[3])
+	# summarize(strs[2], strs[1], strs[3])
 	

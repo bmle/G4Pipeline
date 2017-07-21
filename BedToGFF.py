@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject
+# GplexProject: BedToGff.py
 # Reformats a QuadBase2-outputted BED file into a easier-parsable GFF file
 # =============================================================================
 
@@ -12,18 +12,15 @@ def reformat(bedPath, gffPath, bedToGFFPath):
 	:param bedToGFFPath: the absolute path to where the new gff file should be written
 	:return: nothing
 	"""
-	from GFFLoader import load
-	
-	# Loads GFF file into memory
-	gff = load(gffPath)
-	
+	from GFF import loadSeqregs
+	print('Reformatting...')
+
 	# Prepares new GFF file
 	bedToGFF = open(bedToGFFPath, 'w')
 	bedToGFF.write('##gff-version 3\n')
 	
-	# Extracts sequence-regions and writes to file
-	for line in gff:
-		if line[0].startswith('##sequence-region'): bedToGFF.write(line[0])
+	# Extracts sequence-regions from GFF file and writes to file
+	for line in loadSeqregs(gffPath): bedToGFF.write(line)
 	
 	# Loads BED file into memory and sorts entries by sequence id and start position
 	bed = []
@@ -56,7 +53,9 @@ def reformat(bedPath, gffPath, bedToGFFPath):
 			ID) + ';Name=gplex_' + str(
 			nm) + ';motif=' + motif + ';sequence=' + sequence + ';start=' + str(
 			start) + ';end=' + str(end) + '\n')
-
+	
+	print('Finished!')
+	
 # =============================================================================
 
 if __name__ == '__main__':
