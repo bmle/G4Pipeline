@@ -74,9 +74,5 @@ def main(gffPath, gplexPath, nalPath, minCov=0.4, maxDist=25):
 # =============================================================================
 
 if __name__ == '__main__':
-	# import sys
-	# main(*sys.argv[1:])
-	
-	# For local testing purposes
-	from Paths import path
-	main(*path('GeneOverlap'))
+	import sys
+	main(*sys.argv[1:])

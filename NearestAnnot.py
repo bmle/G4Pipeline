@@ -252,11 +252,3 @@ if __name__ == '__main__':
 	import sys
 	generate(sys.argv[1], sys.argv[2], sys.argv[3])
 	summarize(sys.argv[3], sys.argv[2], sys.argv[4])
-	
-	# For local testing purposes
-	# from Paths import path
-	# strs = path('NearestAnnot-ORFs')
-	# strs = path('NearestAnnot-NALs')
-	# generate(strs[0], strs[1], strs[2])
-	# summarize(strs[2], strs[1], strs[3])
-	

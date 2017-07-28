@@ -72,14 +72,10 @@ def main(alignPath, gffPath, outputPath):
 		for i, item in enumerate(nalign):
 			outFile.write(item[0] + '\tblastn\tnon-alignment\t' + str(item[1]) + '\t' + str(item[2]) + '\t.\t.\t.\tID=nal_' + str(i) + ';Name=nal_' + str(i) + ';Start=' + str(item[1]) + ';End=' + str(item[2]) + '\n')
 	
-	print('Finished writing to ' + outputPath + '\nFinished!')
+	print('Finished writing to ' + outputPath + '\nFinished!\n')
 	
 # =============================================================================
 
 if __name__ == '__main__':
-	# import sys
-	# main(sys.argv[1], sys.argv[2], sys.argv[3])
-	
-	# For local testing purposes
-	from Paths import path
-	main(*path('NALs'))
+	import sys
+	main(sys.argv[1], sys.argv[2], sys.argv[3])

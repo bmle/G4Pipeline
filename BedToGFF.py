@@ -54,14 +54,10 @@ def reformat(bedPath, gffPath, bedToGFFPath):
 			nm) + ';motif=' + motif + ';sequence=' + sequence + ';start=' + str(
 			start) + ';end=' + str(end) + '\n')
 	
-	print('Finished writing output to ' + bedToGFFPath + '\nFinished!')
+	print('Finished writing output to ' + bedToGFFPath + '\nFinished!\n')
 	
 # =============================================================================
 
 if __name__ == '__main__':
 	import sys
 	reformat(sys.argv[1], sys.argv[2], sys.argv[3])
-	
-	# For local testing purposes
-	# from Paths import path
-	# reformat(*path('BedToGFF'))
