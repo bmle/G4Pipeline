@@ -56,11 +56,11 @@ def writeEntry(line):
 	return toReturn[:-1]
 
 def writeFile(filePath, header, data):
-	"""Write data to GFF files.
+	"""Write data to a GFF file.
 
 	:param filePath: the path to the file to write to
-	:param header: the headers of the GFF files
-	:param data: the data for each file
+	:param header: the headers of the GFF file
+	:param data: the data for the file
 	:return: nothing
 	"""
 	from itertools import groupby
@@ -70,5 +70,5 @@ def writeFile(filePath, header, data):
 			if type(line) is list: file.write(line[0])
 			else: file.write(line)
 		data.sort()
-		dataFiltered = list(l for l, _ in groupby(data))
+		dataFiltered = list(l for l, _ in groupby(data))	# removes duplicates from data
 		for line in dataFiltered: file.write(writeEntry(line))

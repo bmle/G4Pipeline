@@ -6,29 +6,29 @@
 # non-alignment at the same position.
 # =============================================================================
 
-def main(gffPath, gplexPath, nalPath, geneOPath, nalOPath, gplexOPath):
+def main(gffPath, gplexPath, nalPath, minCov=0.4, maxDist=25):
 	"""Generate a GFF file of genes that overlap at least one gplex and at least one non-alignment.
 	
 	:param gffPath: the absolute path to the input gene annotation GFF file
 	:param gplexPath: the absolute path to the input gplex GFF file
 	:param nalPath: the absolute path to the input non-alignment GFF file
-	:param geneOPath: the absolute path to the output gene GFF file
-	:param nalOPath: the absolute path to the output non-alignment GFF file
-	:param gplexOPath: the absolute path to the output gplex GFF file
+	:param minCov: minimum overlap required of non-aligned region
+	:param maxDist: max number of base pairs away a gplex can be from a gene
 	:return: nothing
 	"""
+	from os.path import dirname
 	from GFF import load, writeFile
 	
 	print('Loading files...')
-	nalsData = load(nalPath)
-	gplexData = load(gplexPath)
 	gffData = load(gffPath)
+	gplexData = load(gplexPath)
+	nalsData = load(nalPath)
 	
 	# Separates annotation headers from data
 	gffHeaders = []
 	gffs = []
 	for line in gffData:
-		if line[0].startswith(('##', '#!')): gffHeaders.append(line)
+		if line[0].startswith('#'): gffHeaders.append(line)
 		else: gffs.append(line)
 	
 	# Finds overlaps for each ORF
@@ -36,8 +36,6 @@ def main(gffPath, gplexPath, nalPath, geneOPath, nalOPath, gplexOPath):
 	genes = []
 	nals = []
 	gplexes = []
-	minCov = 0.40	# minimum overlap required of non-aligned region
-	maxDist = 25	# max number of base pairs away a gplex can be from a gene
 	
 	for gene in gffs:
 		tempNals = []
@@ -55,31 +53,32 @@ def main(gffPath, gplexPath, nalPath, geneOPath, nalOPath, gplexOPath):
 					tempNals.append(nline)
 					sumCov += (end-start)
 		
-		# Iterates over each gplex
+		# Iterates over each gplex; gplex is included if its distance to the orf is no larger than 'maxDist'
 		for gplex in gplexData:
 			if gplex[0] == gene[0]:
 				start = max(gStart, int(gplex[3]))
 				end = min(gEnd, int(gplex[4]))
-				if start-end <= maxDist:	tempGplexes.append(gplex)
+				if (start-end) <= int(maxDist):	tempGplexes.append(gplex)
 
 		# If coverage is at least 'minCov' and there exists at least one gplex, add to data
-		if (sumCov/(gEnd-gStart) > minCov) and (len(tempGplexes) > 0):
+		if (sumCov/(gEnd-gStart) > int(minCov)) and (len(tempGplexes) > 0):
 			genes.append(gene)
 			nals.extend(tempNals)
 			gplexes.extend(tempGplexes)
 			
 	# Write everything
 	print('Writing to output files...')
-	writeFile(geneOPath, gffHeaders, genes)
-	writeFile(nalOPath, gffHeaders, nals)
-	writeFile(gplexOPath, gffHeaders, gplexes)
-	print('Finished!')
+	output = dirname(gffPath) + '/overlaps/'
+	writeFile(output + 'genes.gff', gffHeaders, genes)
+	writeFile(output + 'nals.gff', gffHeaders, nals)
+	writeFile(output + 'gplexes.gff', gffHeaders, gplexes)
+	print('Finished writing output to ' + output)
 
 # =============================================================================
 
 if __name__ == '__main__':
 	import sys
-	main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+	main(*sys.argv)
 	
 	# For local testing purposes
 	# from Paths import path
