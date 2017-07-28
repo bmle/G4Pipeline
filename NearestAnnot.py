@@ -20,8 +20,8 @@ def generate(gplexPath, annotPath, dataPath):
 	
 	# Loads files into memory
 	print('Loading files...')
-	gplex = load(gplexPath)
-	annot = load(annotPath)
+	gplex = load(gplexPath)[2]
+	annot = load(annotPath)[2]
 	
 	# Prepares list of closest ORFs
 	orfListData = []
@@ -29,8 +29,7 @@ def generate(gplexPath, annotPath, dataPath):
 
 	# Iterate over all gplex entries
 	print('Calculating stats for each G-quadruplex...')
-	gen = (line for line in gplex if len(line) == 9)
-	for line in gen:
+	for line in gplex:
 		seqid = line[0]
 		start = int(line[3])
 		end = int(line[4])
@@ -77,6 +76,7 @@ def generate(gplexPath, annotPath, dataPath):
 	with open(dataPath, 'w') as stats:
 		col_width = [max(len(str(x)) + 2 for x in line) for line in zip(*orfList)]
 		for row in orfList:	stats.write(''.join(str(word).ljust(col_width[i]) for i, word in enumerate(row)).rstrip() + '\n')
+	print('Finished writing to ' + dataPath)
 	print('Finished generating data file!\n')
 	
 
@@ -88,7 +88,7 @@ def summarize(dataPath,annotPath, summaryPath):
 	:param summaryPath: the absolute path to where the summary file should be written
 	:return: nothing
 	"""
-	from GFF import loadSeqregs
+	from GFF import load
 	print('Generating summary file...')
 	
 	print('Loading data...')
@@ -99,12 +99,10 @@ def summarize(dataPath,annotPath, summaryPath):
 			temp = line.split()
 			temp[9] = int(temp[9])
 			data.append(temp)
-		
-	# Extracts sequence-regions
-	seqregs = sorted([line.split(' ')[1] for line in loadSeqregs(annotPath)])
-	
+
 	# Separates contents based on sequence regions
 	dictlol = {}
+	seqregs = sorted([line.split(' ')[1] for line in load(annotPath)[1]])
 	for seq in seqregs:	dictlol[seq] = [row for row in data if row[1] == seq]
 	
 	# Writes to file
@@ -175,12 +173,12 @@ def summarize(dataPath,annotPath, summaryPath):
 					if not tempList:
 						distances.append([key+':', 'n/a (no non-overlapping g-quadruplexes)'])
 					else:
-						distances.append([key+':', str(mean(tempList[9]))])
+						distances.append([key+':', str(mean(tempList[9])) + ' bp'])
 						sumAll += sum(map(abs, tempList[9]))
 						count += len(tempList[9])
 		
 		# Calculates average across all sequences
-		distances.insert(0, ['All sequences:', str(round(sumAll/count,2)) +  ' bp'])
+		distances.insert(0, ['All sequences:', str(round(sumAll/count,2)) + ' bp'])
 		
 		# Writes everything
 		width = [max(len(str(x))+1 for x in col) for col in zip(*distances)]
@@ -227,6 +225,7 @@ def summarize(dataPath,annotPath, summaryPath):
 		header = 'Locations of G-quadruplexes relative to their nearest annotations:'
 		writer(sumFile, header, toWrite)
 	
+	print('Finished writing to ' + summaryPath)
 	print('Finished generating summary file!\n')
 
 

@@ -5,40 +5,31 @@
 # =============================================================================
 
 def load(filePath):
-	"""Load the contents of a GFF file into a list of lists.
+	"""Load the contents of a GFF file.
 
 	:param filePath: the absolute path to the GFF file
 	:return: a list of lists representing the contents of the GFF file
 	"""
 	from operator import itemgetter
 	
-	headers = []
-	data = []
+	headerList = []
+	seqregList = []
+	dataList = []
 	with open(filePath) as file:
 		for line in file:
 			temp = line.split('\t')
 			if len(temp) == 9:
 				temp[8] = temp[8].split(';')
-				data.append(temp)
+				dataList.append(temp)
+			elif temp[0].startswith('##sequence-region'):
+				seqregList.append(line)
+			elif temp[0].startswith('#'):
+				headerList.append(line)
 			else:
-				headers.append(temp)
-				
-	data = sorted(data, key=itemgetter(0,3))
-	headers.extend(data)
-	return headers
-
-def loadSeqregs(filePath):
-	"""Load the sequence-regions from the GFF file into a list.
+				raise AssertionError('Unknown line in GFF file: ' + line)
+	dataList = sorted(dataList, key=itemgetter(0, 3))
 	
-	:param filePath: the absolute path to the GFF file
-	:return: a list of sequence-regions
-	"""
-	
-	toReturn = []
-	with open(filePath) as file:
-		for line in file:
-			if line.startswith('##sequence-region'): toReturn.append(line)
-	return toReturn
+	return [headerList, seqregList, dataList]
 
 def writeEntry(line):
 	"""Convert a GFF-formatted entry into a string.
@@ -66,9 +57,7 @@ def writeFile(filePath, header, data):
 	from itertools import groupby
 	
 	with open(filePath, 'w') as file:
-		for line in header:
-			if type(line) is list: file.write(line[0])
-			else: file.write(line)
+		for line in header: file.write(line)
 		data.sort()
 		dataFiltered = list(l for l, _ in groupby(data))	# removes duplicates from data
 		for line in dataFiltered: file.write(writeEntry(line))

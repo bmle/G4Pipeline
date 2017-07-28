@@ -12,7 +12,7 @@ def reformat(bedPath, gffPath, bedToGFFPath):
 	:param bedToGFFPath: the absolute path to where the new gff file should be written
 	:return: nothing
 	"""
-	from GFF import loadSeqregs
+	from GFF import load
 	print('Reformatting...')
 
 	# Prepares new GFF file
@@ -20,7 +20,7 @@ def reformat(bedPath, gffPath, bedToGFFPath):
 	bedToGFF.write('##gff-version 3\n')
 	
 	# Extracts sequence-regions from GFF file and writes to file
-	for line in loadSeqregs(gffPath): bedToGFF.write(line)
+	for line in load(gffPath)[1]: bedToGFF.write(line)
 	
 	# Loads BED file into memory and sorts entries by sequence id and start position
 	bed = []
@@ -54,7 +54,7 @@ def reformat(bedPath, gffPath, bedToGFFPath):
 			nm) + ';motif=' + motif + ';sequence=' + sequence + ';start=' + str(
 			start) + ';end=' + str(end) + '\n')
 	
-	print('Finished!')
+	print('Finished writing output to ' + bedToGFFPath + '\nFinished!')
 	
 # =============================================================================
 

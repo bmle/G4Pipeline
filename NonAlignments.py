@@ -15,7 +15,7 @@ def main(alignPath, gffPath, outputPath):
 	import re
 	from collections import OrderedDict
 	from operator import itemgetter
-	from GFF import loadSeqregs
+	from GFF import load
 	
 	# Loads alignments from SAM file
 	entries = []
@@ -25,7 +25,7 @@ def main(alignPath, gffPath, outputPath):
 				entries.append(line.split('\t'))
 	
 	# Loads sequence headers from GFF file
-	temp1 = [seq.split() for seq in sorted(loadSeqregs(gffPath))]
+	temp1 = [seq.split() for seq in sorted(load(gffPath)[1])]
 	seqs = OrderedDict([(seq[1], seq[3]) for seq in temp1])
 	
 	# Extracts coordinates of aligned sequences
@@ -72,14 +72,14 @@ def main(alignPath, gffPath, outputPath):
 		for i, item in enumerate(nalign):
 			outFile.write(item[0] + '\tblastn\tnon-alignment\t' + str(item[1]) + '\t' + str(item[2]) + '\t.\t.\t.\tID=nal_' + str(i) + ';Name=nal_' + str(i) + ';Start=' + str(item[1]) + ';End=' + str(item[2]) + '\n')
 	
-	print('Finished!')
+	print('Finished writing to ' + outputPath + '\nFinished!')
 	
 # =============================================================================
 
 if __name__ == '__main__':
-	import sys
-	main(sys.argv[1], sys.argv[2], sys.argv[3])
+	# import sys
+	# main(sys.argv[1], sys.argv[2], sys.argv[3])
 	
 	# For local testing purposes
-	# from Paths import path
-	# main(*path('NALs'))
+	from Paths import path
+	main(*path('NALs'))
