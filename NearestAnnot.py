@@ -80,7 +80,7 @@ def generate(gplexPath, annotPath, dataPath):
 	print('Finished generating data file!\n')
 	
 
-def summarize(dataPath,annotPath, summaryPath):
+def summarize(dataPath, annotPath, summaryPath):
 	"""Generate summary statistics for the data file previously written.
 	
 	:param dataPath: the absolute path to the data file generated beforehand
@@ -104,6 +104,8 @@ def summarize(dataPath,annotPath, summaryPath):
 	dictlol = {}
 	seqregs = sorted([line.split(' ')[1] for line in load(annotPath)[1]])
 	for seq in seqregs:	dictlol[seq] = [row for row in data if row[1] == seq]
+	
+	# TODO: fix issue where gplexes with no closest annotation will fail
 	
 	# Writes to file
 	with open(summaryPath, 'w') as sumFile:
