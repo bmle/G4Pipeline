@@ -6,7 +6,7 @@
 # non-alignment at the same position.
 # =============================================================================
 
-def main(gffPath, gplexPath, nalPath, minCov=0.4, maxDist=25):
+def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=25):
 	"""Generate a GFF file of genes that overlap at least one gplex and at least one non-alignment.
 	
 	:param gffPath: the absolute path to the input gene annotation GFF file
@@ -56,7 +56,7 @@ def main(gffPath, gplexPath, nalPath, minCov=0.4, maxDist=25):
 				if (start-end) <= int(maxDist):	tempGplexes.append(gplex)
 
 		# If coverage is at least 'minCov' and there exists at least one gplex, add to data
-		if (sumCov/(gEnd-gStart) > int(minCov)) and (len(tempGplexes) > 0):
+		if (sumCov/(gEnd-gStart) > float(minCov)) and (len(tempGplexes) > 0):
 			genes.append(gene)
 			nals.extend(tempNals)
 			gplexes.extend(tempGplexes)
