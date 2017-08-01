@@ -4,29 +4,28 @@
 # Generates a 'non-alignment' file from a SAM file and genome annotation file
 # =============================================================================
 
-def main(alignPath, gffPath, outputPath):
+def main(alignPath, outputPath):
 	"""Generate a GFF file of non-aligned regions from a SAM alignment file.
 	
 	:param alignPath: the absolute path to the genome sam file (for alignments)
-	:param gffPath: the absolute path to the genome annotation file (for sequence headers)
 	:param outputPath: the absolute path to where the output file should be written
 	:return: nothing
 	"""
 	import re
-	from collections import OrderedDict
 	from operator import itemgetter
-	from GFF import load
+	print('\nGenerating non-alignments...')
 	
 	# Loads alignments from SAM file
+	print('Loading data...')
 	entries = []
+	seqs = {}
 	with open(alignPath, 'r') as alignFile:
 		for line in alignFile:
+			temp = line.split('\t')
 			if not line.startswith('@'):
-				entries.append(line.split('\t'))
-	
-	# Loads sequence headers from GFF file
-	temp1 = [seq.split() for seq in sorted(load(gffPath)[1])]
-	seqs = OrderedDict([(seq[1], seq[3]) for seq in temp1])
+				entries.append(temp)
+			elif line.startswith('@SQ'):
+				seqs[temp[1][3:]] = temp[2][3:]
 	
 	# Extracts coordinates of aligned sequences
 	print('Extracting coordinates...')
@@ -68,7 +67,7 @@ def main(alignPath, gffPath, outputPath):
 	print('Writing to file...')
 	with open(outputPath, 'w') as outFile:
 		outFile.write('##gff-version 3\n')
-		for k,v in seqs.items(): outFile.write('##sequence-region ' + k + ' 1 ' + v + '\n')
+		for k,v in seqs.items(): outFile.write('##sequence-region ' + k + ' 1 ' + v)
 		for i, item in enumerate(nalign):
 			outFile.write(item[0] + '\tblastn\tnon-alignment\t' + str(item[1]) + '\t' + str(item[2]) + '\t.\t.\t.\tID=nal_' + str(i) + ';Name=nal_' + str(i) + ';Start=' + str(item[1]) + ';End=' + str(item[2]) + '\n')
 	

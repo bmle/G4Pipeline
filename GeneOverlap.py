@@ -6,7 +6,7 @@
 # non-alignment at the same position.
 # =============================================================================
 
-def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=25):
+def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=0):
 	"""Generate a GFF file of genes that overlap at least one gplex and at least one non-alignment.
 	
 	:param gffPath: the absolute path to the input gene annotation GFF file
@@ -18,13 +18,16 @@ def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=25):
 	"""
 	import os
 	from GFF import load, writeFile
+	print('\nGenerating gene overlaps...')
 	
 	print('Loading files...')
 	gplexData = load(gplexPath)[2]
 	nalsData = load(nalPath)[2]
 	tempGeneData = load(gffPath)
 	headers = tempGeneData[0] + tempGeneData[1]
-	geneData = tempGeneData[2]
+	geneData = []
+	for line in tempGeneData[2]:
+		if line[2]=='gene': geneData.append(line)
 	
 	# Finds overlaps for each ORF
 	print('Calculating overlaps...')
@@ -32,7 +35,9 @@ def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=25):
 	nals = []
 	gplexes = []
 	
-	for gene in geneData:
+	l = len(geneData)
+	for i, gene in enumerate(geneData):
+		print('\tCalculating ' + str(i+1) + ' of ' + str(l) + '...')
 		tempNals = []
 		tempGplexes = []
 		sumCov = 0

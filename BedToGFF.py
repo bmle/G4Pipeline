@@ -4,29 +4,31 @@
 # Reformats a QuadBase2-outputted BED file into a easier-parsable GFF file
 # =============================================================================
 
-def reformat(bedPath, gffPath, bedToGFFPath):
+def reformat(bedPath, fastaPath, bedToGFFPath):
 	"""Reformat a QuadBase2-outputted BED file to a more-parsable GFF file.
 	
 	:param bedPath: the absolute path to the QuadBase2 file
-	:param gffPath: the absolute path to the genomic annotation gff file
+	:param fastaPath: the absolute path to the genomic sequence FASTA file
 	:param bedToGFFPath: the absolute path to where the new gff file should be written
 	:return: nothing
 	"""
-	from GFF import load
-	print('Reformatting...')
+	from operator import itemgetter
+	from natsort import natsorted
+	from GFF import generateSeqRegs
+	print('\nReformatting BED to GFF...')
 
 	# Prepares new GFF file
 	bedToGFF = open(bedToGFFPath, 'w')
 	bedToGFF.write('##gff-version 3\n')
 	
 	# Extracts sequence-regions from GFF file and writes to file
-	for line in load(gffPath)[1]: bedToGFF.write(line)
+	for line in generateSeqRegs(fastaPath): bedToGFF.write(line + '\n')
 	
 	# Loads BED file into memory and sorts entries by sequence id and start position
 	bed = []
 	with open(bedPath) as bedFile:
 		for line in bedFile: bed.append(line.split('\t'))
-	bed.sort(key=lambda x: (x[0], int(x[1])))
+	bed = natsorted(bed, key=itemgetter(0,1))
 	
 	# Iterate over all G-plex entries in bed array
 	for i, line in enumerate(bed):
@@ -54,7 +56,7 @@ def reformat(bedPath, gffPath, bedToGFFPath):
 			nm) + ';motif=' + motif + ';sequence=' + sequence + ';start=' + str(
 			start) + ';end=' + str(end) + '\n')
 	
-	print('Finished writing output to ' + bedToGFFPath + '\nFinished!\n')
+	print('Finished writing output to ' + bedToGFFPath + '\nFinished reformatting!\n')
 	
 # =============================================================================
 

@@ -16,9 +16,9 @@ def generate(gplexPath, annotPath, dataPath):
 	import math
 	from operator import itemgetter
 	from GFF import load
-	print('Generating data file...')
+	print('\nGenerating data file...')
 	
-	# Loads files into memory
+	# Loads data
 	print('Loading files...')
 	gplex = load(gplexPath)[2]
 	annot = load(annotPath)[2]
@@ -29,7 +29,9 @@ def generate(gplexPath, annotPath, dataPath):
 
 	# Iterate over all gplex entries
 	print('Calculating stats for each G-quadruplex...')
-	for line in gplex:
+	l = len(gplex)
+	for i, line in enumerate(gplex):
+		print('\tCalculating ' + str(i+1) + ' of ' + str(l) + '...')
 		seqid = line[0]
 		start = int(line[3])
 		end = int(line[4])
@@ -41,24 +43,31 @@ def generate(gplexPath, annotPath, dataPath):
 		pos = 'n/a'
 		annotid = 'n/a'
 		annotStrand = 'n/a'
-
-		for annotLine in annot:
-			if annotLine[0] == seqid:
-				dis = {'5\'-5\'': int(annotLine[3]) - start,
-					'3\'-5\'': int(annotLine[3]) - end,
-					'5\'-3\'': int(annotLine[4]) - start,
-					'3\'-3\'': int(annotLine[4]) - end}
-				key = min({k: abs(v) for k,v in dis.items()}.items(), key=itemgetter(1))[0]
-				val = dis[key]
-				
-				if abs(val) < abs(minDist):
-					minDist = val
-					pos = key
-					annotid = annotLine[8][0][3:]
-					annotStrand = annotLine[6]
-		temp = pos.split('-')
+		
+		# Iterate over every annotation
+		gen = (line for line in annot if (line[0]==seqid and (line[2]=='gene' or line[
+			2]=='non-alignment')))
+		for annotLine in gen:
+			dis = {'5\'-5\'': int(annotLine[3]) - start,
+				'3\'-5\'': int(annotLine[3]) - end,
+				'5\'-3\'': int(annotLine[4]) - start,
+				'3\'-3\'': int(annotLine[4]) - end}
+			key = min({k: abs(v) for k,v in dis.items()}.items(), key=itemgetter(1))[0]
+			val = dis[key]
+			
+			# If the distance to this annotation is smaller than the currently-recorded annotation, replace the old annot with this one
+			if abs(val) < abs(minDist):
+				minDist = val
+				pos = key
+				annotid = annotLine[8][0][3:]
+				annotStrand = annotLine[6]
+			# This works because $gen (and $annot) are sorted by start + end
+			# positions, so any successive entries will only get further away
+			elif abs(val) > abs(minDist):
+				break
 		
 		# Calculates location relative to its nearest annotation
+		temp = pos.split('-')
 		if temp[0] == 'n/a':
 			location = 'n/a (no annotations on this sequence)'
 			temp.append('n/a')
@@ -80,16 +89,16 @@ def generate(gplexPath, annotPath, dataPath):
 	print('Finished generating data file!\n')
 	
 
-def summarize(dataPath, annotPath, summaryPath):
+def summarize(dataPath, fastaPath, summaryPath):
 	"""Generate summary statistics for the data file previously written.
 	
 	:param dataPath: the absolute path to the data file generated beforehand
-	:param annotPath: the absolute path to the GFF-formatted genome annotation file
+	:param fastaPath: the absolute path to the genomic FASTA file
 	:param summaryPath: the absolute path to where the summary file should be written
 	:return: nothing
 	"""
-	from GFF import load
-	print('Generating summary file...')
+	from GFF import generateSeqRegs
+	print('\nGenerating summary file...')
 	
 	print('Loading data...')
 	data = []
@@ -97,15 +106,13 @@ def summarize(dataPath, annotPath, summaryPath):
 		next(dataFile)
 		for line in dataFile:
 			temp = line.split()
-			temp[9] = int(temp[9])
+			temp[9] = int(temp[9]) if temp[9]!='on' else temp[9]
 			data.append(temp)
 
 	# Separates contents based on sequence regions
 	dictlol = {}
-	seqregs = sorted([line.split(' ')[1] for line in load(annotPath)[1]])
+	seqregs = [line.split(' ')[1] for line in generateSeqRegs(fastaPath)]
 	for seq in seqregs:	dictlol[seq] = [row for row in data if row[1] == seq]
-	
-	# TODO: fix issue where gplexes with no closest annotation will fail
 	
 	# Writes to file
 	with open(summaryPath, 'w') as sumFile:
@@ -252,5 +259,6 @@ def writer(fileObj, header, lol):
 
 if __name__ == '__main__':
 	import sys
+	# arguments: [gplexPath, annotPath, dataPath, fastaPath, summaryPath]
 	generate(sys.argv[1], sys.argv[2], sys.argv[3])
-	summarize(sys.argv[3], sys.argv[2], sys.argv[4])
+	summarize(sys.argv[3], sys.argv[4], sys.argv[5])

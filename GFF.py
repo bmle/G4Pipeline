@@ -11,6 +11,7 @@ def load(filePath):
 	:return: a list of lists representing the contents of the GFF file
 	"""
 	from operator import itemgetter
+	from natsort import natsorted
 	
 	headerList = []
 	seqregList = []
@@ -27,8 +28,10 @@ def load(filePath):
 				headerList.append(line)
 			else:
 				raise AssertionError('Unknown line in GFF file: ' + line)
-	dataList = sorted(dataList, key=itemgetter(0, 3))
 	
+	# Sorts by: seqid -> start position -> end position
+	dataList = natsorted(dataList, key=itemgetter(0,3,4))
+	seqregList = natsorted(seqregList)
 	return [headerList, seqregList, dataList]
 
 def writeEntry(line):
@@ -49,15 +52,51 @@ def writeEntry(line):
 def writeFile(filePath, header, data):
 	"""Write data to a GFF file.
 
-	:param filePath: the path to the file to write to
+	:param filePath: the absolute path to the file to write to
 	:param header: the headers of the GFF file
 	:param data: the data for the file
 	:return: nothing
 	"""
+	from natsort import natsorted
 	from itertools import groupby
 	
 	with open(filePath, 'w') as file:
 		for line in header: file.write(line)
-		data.sort()
-		dataFiltered = list(l for l, _ in groupby(data))	# removes duplicates from data
+		data = natsorted(data)
+		dataFiltered = list(l for l,_ in groupby(data))	# removes duplicates from data
 		for line in dataFiltered: file.write(writeEntry(line))
+
+def generateSeqRegs(fastaPath):
+	"""Generate sequence headers from a FASTA file.
+	
+	:param fastaPath: the absolute path to the FASTA file
+	:return: a list of sequence-regions (formatted as strings)
+	"""
+	import re
+	from natsort import natsorted
+	
+	tempList = []
+	pattern = '[>\|,\s]+'
+	f = open(fastaPath, 'r')
+	
+	# Prompts the user to specify the location of the sequence region name
+	s = f.readline().strip()
+	fline = re.split(pattern, s)
+	print(fline)
+	index = int(input('Index of position that contains sequence label: '))
+	tempList.append([fline[index], 0])
+	
+	# Iterates over the rest of the strings
+	for line in f:
+		if not line.startswith('>'):
+			tempList[-1][1] += len(line.strip())
+		else:
+			tempList.append([re.split(pattern, line.strip())[index], 0])
+	f.close()
+	
+	# Builds the strings
+	toReturn = []
+	for pair in tempList:
+		toReturn.append('##sequence-region ' + pair[0] + ' 1 ' + str(pair[1]))
+	return natsorted(toReturn)
+	
