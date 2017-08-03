@@ -1,14 +1,14 @@
 # =============================================================================
 # bmle
 # GplexProject: NonAlignments.py
-# Generates a 'non-alignment' file from a SAM file and genome annotation file
+# Generates a 'non-alignment' file from a SAM file
 # =============================================================================
 
 def main(alignPath, outputPath):
 	"""Generate a GFF file of non-aligned regions from a SAM alignment file.
 	
-	:param alignPath: the absolute path to the genome sam file (for alignments)
-	:param outputPath: the absolute path to where the output file should be written
+	:param alignPath: path to the SAM-formatted blastn alignment file
+	:param outputPath: path to where the output file should be written
 	:return: nothing
 	"""
 	import re
@@ -76,5 +76,14 @@ def main(alignPath, outputPath):
 # =============================================================================
 
 if __name__ == '__main__':
-	import sys
-	main(sys.argv[1], sys.argv[2], sys.argv[3])
+	import argparse
+	
+	parser = argparse.ArgumentParser(
+		description='Generates a GFF file of non-aligned regions from a SAM alignment file.')
+	parser.add_argument('alignPath',
+						help='path to the SAM-formatted blastn alignment file')
+	parser.add_argument('outputPath',
+						help='path to where the output file should be written')
+	args = parser.parse_args()
+	
+	main(args.alignPath, args.outputPath)

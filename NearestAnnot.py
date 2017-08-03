@@ -1,18 +1,18 @@
 # =============================================================================
 # bmle
 # GplexProject: NearestAnnot.py
-# Given a GFF file of G-quadruplexes and a GFF file of annotations, finds the
-# nearest annotation to each Gplex
+# Finds the nearest annotation to each Gplex
 # =============================================================================
 
 def generate(gplexPath, annotPath, dataPath):
 	"""Generate a data file listing nearest annotations for each gplex.
 
-		:param gplexPath: the absolute path to the GFF-formatted gplex file
-		:param annotPath: the absolute path to the GFF-formatted genome annotation file
-		:param dataPath: the absolute path to where the data file should be written
+		:param gplexPath: path to the GFF-formatted gplex file
+		:param annotPath: path to the GFF-formatted gene annotation file
+		:param dataPath: path to where the output data file should be written
 		:return: nothing
 	"""
+	import os
 	import math
 	from operator import itemgetter
 	from GFF import load
@@ -82,6 +82,8 @@ def generate(gplexPath, annotPath, dataPath):
 	# Writes orfList to output file
 	print('Writing to file...')
 	orfList = orfListHeaders + orfListData
+	os.makedirs(os.path.dirname(dataPath), exist_ok=True)
+	
 	with open(dataPath, 'w') as stats:
 		col_width = [max(len(str(x)) + 2 for x in line) for line in zip(*orfList)]
 		for row in orfList:	stats.write(''.join(str(word).ljust(col_width[i]) for i, word in enumerate(row)).rstrip() + '\n')
@@ -92,9 +94,9 @@ def generate(gplexPath, annotPath, dataPath):
 def summarize(dataPath, fastaPath, summaryPath):
 	"""Generate summary statistics for the data file previously written.
 	
-	:param dataPath: the absolute path to the data file generated beforehand
-	:param fastaPath: the absolute path to the genomic FASTA file
-	:param summaryPath: the absolute path to where the summary file should be written
+	:param dataPath: path to where the output data file is written
+	:param fastaPath: path to the FASTA-formatted genomic sequence file
+	:param summaryPath: path to where the output summary file should be written
 	:return: nothing
 	"""
 	from GFF import generateSeqRegs
@@ -258,7 +260,21 @@ def writer(fileObj, header, lol):
 # =============================================================================
 
 if __name__ == '__main__':
-	import sys
-	# arguments: [gplexPath, annotPath, dataPath, fastaPath, summaryPath]
-	generate(sys.argv[1], sys.argv[2], sys.argv[3])
-	summarize(sys.argv[3], sys.argv[4], sys.argv[5])
+	import argparse
+	
+	parser = argparse.ArgumentParser(
+		description='Finds the nearest annotation to each Gplex.')
+	parser.add_argument('gplexPath',
+						help='path to the GFF-formatted gplex file')
+	parser.add_argument('annotPath',
+						help='path to the GFF-formatted gene annotation file')
+	parser.add_argument('dataPath',
+						help='path to where the output data file should be written')
+	parser.add_argument('fastaPath',
+						help='path to the FASTA-formatted genomic sequence file')
+	parser.add_argument('summaryPath',
+						help='path to where the output summary file should be written')
+	args = parser.parse_args()
+	
+	generate(args.gplexPath, args.annotPath, args.dataPath)
+	summarize(args.dataPath, args.fastaPath, args.summaryPath)

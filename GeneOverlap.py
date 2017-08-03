@@ -9,11 +9,11 @@
 def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=0):
 	"""Generate a GFF file of genes that overlap at least one gplex and at least one non-alignment.
 	
-	:param gffPath: the absolute path to the input gene annotation GFF file
-	:param gplexPath: the absolute path to the input gplex GFF file
-	:param nalPath: the absolute path to the input non-alignment GFF file
-	:param minCov: minimum overlap required of non-aligned region
-	:param maxDist: max number of base pairs away a gplex can be from a gene
+	:param gffPath: path to the GFF-formatted gene annotation file
+	:param gplexPath: path to the GFF-formatted gplex file
+	:param nalPath: path to the GFF-formatted non-alignment file
+	:param minCov: minimum overlap required of non-aligned region (default=0.5)
+	:param maxDist: max number of base pairs separating a gplex and gene (default=0)
 	:return: nothing
 	"""
 	import os
@@ -69,8 +69,6 @@ def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=0):
 	# Write everything
 	print('Writing to output files...')
 	output = os.path.dirname(gffPath) + '/overlaps/'
-	if not os.path.exists(output): os.makedirs(output)
-	
 	writeFile(output + 'genes.gff', headers, genes)
 	writeFile(output + 'nals.gff', headers, nals)
 	writeFile(output + 'gplexes.gff', headers, gplexes)
@@ -79,5 +77,19 @@ def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=0):
 # =============================================================================
 
 if __name__ == '__main__':
-	import sys
-	main(*sys.argv[1:])
+	import argparse
+	
+	parser = argparse.ArgumentParser(description='Generate a GFF file of genes that overlap at least one gplex and at least one non-alignment.')
+	parser.add_argument('gffPath',
+						help='path to the GFF-formatted gene annotation file')
+	parser.add_argument('gplexPath',
+						help='path to the GFF-formatted gplex file')
+	parser.add_argument('nalPath',
+						help='path to the GFF-formatted non-alignment file')
+	parser.add_argument('--minCov', type=float, action='store', const=0.5,
+						help='minimum overlap required of non-aligned region (default=0.5)')
+	parser.add_argument('--maxDist', type=int, action='store', const=0,
+						help='max number of base pairs separating a gplex and gene (default=0)')
+	args = parser.parse_args()
+	
+	main(args.gffPath, args.gplexPath, args.nalPath, args.minCov, args.maxDist)

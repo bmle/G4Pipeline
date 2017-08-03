@@ -10,24 +10,29 @@ def load(filePath):
 	:param filePath: the absolute path to the GFF file
 	:return: a list of lists representing the contents of the GFF file
 	"""
+	import os
+	import errno
 	from operator import itemgetter
 	from natsort import natsorted
 	
 	headerList = []
 	seqregList = []
 	dataList = []
-	with open(filePath) as file:
-		for line in file:
-			temp = line.split('\t')
-			if len(temp) == 9:
-				temp[8] = temp[8].split(';')
-				dataList.append(temp)
-			elif temp[0].startswith('##sequence-region'):
-				seqregList.append(line)
-			elif temp[0].startswith('#'):
-				headerList.append(line)
-			else:
-				raise AssertionError('Unknown line in GFF file: ' + line)
+	try:
+		with open(filePath) as file:
+			for line in file:
+				temp = line.split('\t')
+				if len(temp) == 9:
+					temp[8] = temp[8].split(';')
+					dataList.append(temp)
+				elif temp[0].startswith('##sequence-region'):
+					seqregList.append(line)
+				elif temp[0].startswith('#'):
+					headerList.append(line)
+				else:
+					raise AssertionError('Unknown line in GFF file: ' + line)
+	except IOError:
+		raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), filePath)
 	
 	# Sorts by: seqid -> start position -> end position
 	dataList = natsorted(dataList, key=itemgetter(0,3,4))
@@ -36,7 +41,7 @@ def load(filePath):
 
 def writeEntry(line):
 	"""Convert a GFF-formatted entry into a string.
-	GFF-formatted entry: [seqid, source, ..., [list of attributes]]
+	GFF-formatted entry: [seqid, source, ..., strand, phase, [attributes]]
 	
 	:param line: A GFF-formatted entry
 	:return: A string representation of the GFF-formatted entry
@@ -57,9 +62,11 @@ def writeFile(filePath, header, data):
 	:param data: the data for the file
 	:return: nothing
 	"""
+	import os
 	from natsort import natsorted
 	from itertools import groupby
 	
+	os.makedirs(os.path.dirname(filePath), exist_ok=True)
 	with open(filePath, 'w') as file:
 		for line in header: file.write(line)
 		data = natsorted(data)
@@ -72,27 +79,31 @@ def generateSeqRegs(fastaPath):
 	:param fastaPath: the absolute path to the FASTA file
 	:return: a list of sequence-regions (formatted as strings)
 	"""
+	import os
+	import errno
 	import re
 	from natsort import natsorted
 	
 	tempList = []
 	pattern = '[>\|,\s]+'
-	f = open(fastaPath, 'r')
 	
-	# Prompts the user to specify the location of the sequence region name
-	s = f.readline().strip()
-	fline = re.split(pattern, s)
-	print(fline)
-	index = int(input('Index of position that contains sequence label: '))
-	tempList.append([fline[index], 0])
-	
-	# Iterates over the rest of the strings
-	for line in f:
-		if not line.startswith('>'):
-			tempList[-1][1] += len(line.strip())
-		else:
-			tempList.append([re.split(pattern, line.strip())[index], 0])
-	f.close()
+	try:
+		with open(fastaPath, 'r') as f:
+			# Prompts the user to specify the location of the sequence region name
+			s = f.readline().strip()
+			fline = re.split(pattern, s)
+			print(fline)
+			index = int(input('Index of position that contains sequence label: '))
+			tempList.append([fline[index], 0])
+			
+			# Iterates over the rest of the strings
+			for line in f:
+				if not line.startswith('>'):
+					tempList[-1][1] += len(line.strip())
+				else:
+					tempList.append([re.split(pattern, line.strip())[index], 0])
+	except IOError:
+		raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), fastaPath)
 	
 	# Builds the strings
 	toReturn = []
