@@ -86,9 +86,9 @@ if __name__ == '__main__':
 						help='path to the GFF-formatted gplex file')
 	parser.add_argument('nalPath',
 						help='path to the GFF-formatted non-alignment file')
-	parser.add_argument('--minCov', type=float, action='store', const=0.5,
+	parser.add_argument('--minCov', type=float, action='store', default=0.5,
 						help='minimum overlap required of non-aligned region (default=0.5)')
-	parser.add_argument('--maxDist', type=int, action='store', const=0,
+	parser.add_argument('--maxDist', type=int, action='store', default=0,
 						help='max number of base pairs separating a gplex and gene (default=0)')
 	args = parser.parse_args()
 	
