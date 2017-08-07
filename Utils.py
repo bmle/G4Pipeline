@@ -1,7 +1,7 @@
 # =============================================================================
 # bmle
-# GplexProject: GFF.py
-# Utilities for manipulating GFF files
+# GplexProject: Utils.py
+# Utilities for manipulating GFF, FASTA, and SAM files
 # =============================================================================
 
 def load(filePath):
@@ -110,4 +110,28 @@ def generateSeqRegs(fastaPath):
 	for pair in tempList:
 		toReturn.append('##sequence-region ' + pair[0] + ' 1 ' + str(pair[1]))
 	return natsorted(toReturn)
+
+def reformat(samPath, genomePath):
+	"""Reformat a blastn-outputted SAM file to replace the 'Query_#' sequence names with the actual sequence names.
+
+	:param samPath: path to the SAM-formatted blastn file
+	:param genomePath: path to the FASTA-formatted query genome file that 'samPath' was based off of
+	:return: nothing
+	"""
+	import fileinput
+	import re
+	print('Reformatting SAM file...')
 	
+	seqList = [seq.split()[1] for seq in generateSeqRegs(genomePath)]
+	seqList.insert(0, 'null')	# offsets the list by one because there doesn't exist a "Query_0"
+	
+	with fileinput.FileInput(samPath, inplace=True) as f:
+		pattern = r'Query_[0-9]+'
+		for line in f:
+			temp = re.search(pattern, line)
+			if temp is not None:
+				num = int(temp.group()[6:])
+				line = re.sub(pattern, seqList[num], line)
+			print(line.strip())
+	
+	print('Finished!')
