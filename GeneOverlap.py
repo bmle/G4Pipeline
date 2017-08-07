@@ -17,7 +17,7 @@ def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=0):
 	:return: nothing
 	"""
 	import os
-	from GFF import load, writeFile
+	from Utils import load, writeFile
 	print('\nGenerating gene overlaps...')
 	
 	print('Loading files...')

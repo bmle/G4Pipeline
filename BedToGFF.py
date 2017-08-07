@@ -15,7 +15,7 @@ def reformat(bedPath, fastaPath, bedToGFFPath):
 	import errno
 	from operator import itemgetter
 	from natsort import natsorted
-	from GFF import generateSeqRegs
+	from Utils import generateSeqRegs
 	print('\nReformatting BED to GFF...')
 
 	# Prepares new GFF file

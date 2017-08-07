@@ -15,7 +15,7 @@ def generate(gplexPath, annotPath, dataPath):
 	import os
 	import math
 	from operator import itemgetter
-	from GFF import load
+	from Utils import load
 	print('\nGenerating data file...')
 	
 	# Loads data
@@ -99,7 +99,7 @@ def summarize(dataPath, fastaPath, summaryPath):
 	:param summaryPath: path to where the output summary file should be written
 	:return: nothing
 	"""
-	from GFF import generateSeqRegs
+	from Utils import generateSeqRegs
 	print('\nGenerating summary file...')
 	
 	print('Loading data...')
