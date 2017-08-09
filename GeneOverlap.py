@@ -9,12 +9,12 @@
 def main(gffPath, gplexPath, nalPath, minCov=0.5, maxDist=0):
 	"""Generate a GFF file of genes that overlap at least one gplex and at least one non-alignment.
 	
-	:param gffPath: path to the GFF-formatted gene annotation file
-	:param gplexPath: path to the GFF-formatted gplex file
-	:param nalPath: path to the GFF-formatted non-alignment file
+	:param gffPath: path to the GFF3-formatted gene annotation file
+	:param gplexPath: path to the GFF3-formatted gplex file
+	:param nalPath: path to the GFF3-formatted non-alignment file
 	:param minCov: minimum overlap required of non-aligned region (default=0.5)
 	:param maxDist: max number of base pairs separating a gplex and gene (default=0)
-	:return: nothing
+	:return: filters the three inputted files for entries that overlap each other into separate files
 	"""
 	import os
 	from Utils import load, writeFile

@@ -4,12 +4,11 @@
 # Generates a 'non-alignment' file from a SAM file
 # =============================================================================
 
-def main(alignPath, outputPath):
-	"""Generate a GFF file of non-aligned regions from a SAM alignment file.
+def main(alignPath):
+	"""Generate a GFF3 file of non-aligned regions from a SAM alignment file.
 	
 	:param alignPath: path to the SAM-formatted blastn alignment file
-	:param outputPath: path to where the output file should be written
-	:return: nothing
+	:return: writes a GFF3 file of non-alignments to the same directory as alignPath
 	"""
 	import re
 	from operator import itemgetter
@@ -65,6 +64,7 @@ def main(alignPath, outputPath):
 	
 	# Writes to GFF file
 	print('Writing to file...')
+	outputPath = alignPath[:-3] + '.gff3'
 	with open(outputPath, 'w') as outFile:
 		outFile.write('##gff-version 3\n')
 		for k,v in seqs.items(): outFile.write('##sequence-region ' + k + ' 1 ' + v)
@@ -82,8 +82,6 @@ if __name__ == '__main__':
 		description='Generates a GFF file of non-aligned regions from a SAM alignment file.')
 	parser.add_argument('alignPath',
 						help='path to the SAM-formatted blastn alignment file')
-	parser.add_argument('outputPath',
-						help='path to where the output file should be written')
 	args = parser.parse_args()
 	
-	main(args.alignPath, args.outputPath)
+	main(args.alignPath)

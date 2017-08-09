@@ -4,25 +4,21 @@
 # Reformats a QuadBase2-outputted BED file into a easier-parsable GFF file
 # =============================================================================
 
-def reformat(bedPath, fastaPath, bedToGFFPath):
+def reformatBED(bedPath, fastaPath):
 	"""Reformat a QuadBase2-outputted BED file to a more-parsable GFF file.
 	
 	:param bedPath: path to the BED-formatted QuadBase2 file
 	:param fastaPath: path to the FASTA-formatted genomic sequence file
-	:param bedToGFFPath: path where the reformatted file should be written to
+	:return: writes a GFF-formatted QuadBase2 file to the same directory as bedPath
 	"""
-	import os
-	import errno
 	from operator import itemgetter
 	from natsort import natsorted
 	from Utils import generateSeqRegs
 	print('\nReformatting BED to GFF...')
-
+	
 	# Prepares new GFF file
-	try:
-		bedToGFF = open(bedToGFFPath, 'w')
-	except IOError:
-		raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), bedToGFFPath)
+	bedToGFFPath = bedPath[:-3] + 'gff3'
+	bedToGFF = open(bedToGFFPath, 'w')
 	bedToGFF.write('##gff-version 3\n')
 	
 	# Extracts sequence-regions from GFF file and writes to file
@@ -36,8 +32,8 @@ def reformat(bedPath, fastaPath, bedToGFFPath):
 	
 	# For determining the strand of a gplex
 	def detStrand():
-		if line[5].startswith('G'): return '+'
-		elif line[5].startswith('C'): return '-'
+		if line[5].startswith(('G', 'g')): return '+'
+		elif line[5].startswith(('C', 'c')): return '-'
 		else: return '?'
 	
 	# Iterate over all G-plex entries in 'bed'
@@ -79,4 +75,4 @@ if __name__ == '__main__':
 						help='path where the reformatted file should be written to')
 	args = parser.parse_args()
 	
-	reformat(args.bedPath, args.fastaPath, args.bedToGFFPath)
+	reformatBED(args.bedPath, args.fastaPath)

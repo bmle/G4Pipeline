@@ -111,7 +111,7 @@ def generateSeqRegs(fastaPath):
 		toReturn.append('##sequence-region ' + pair[0] + ' 1 ' + str(pair[1]))
 	return natsorted(toReturn)
 
-def reformat(samPath, genomePath):
+def reformatSAM(samPath, genomePath):
 	"""Reformat a blastn-outputted SAM file to replace the 'Query_#' sequence names with the actual sequence names.
 
 	:param samPath: path to the SAM-formatted blastn file
@@ -134,4 +134,37 @@ def reformat(samPath, genomePath):
 				line = re.sub(pattern, seqList[num], line)
 			print(line.strip())
 	
-	print('Finished!')
+	print('Finished!\n')
+
+def reformatGFF(gffPath, fastaPath):
+	"""Reformat a GFF annotation file to a GFF3 file.
+	
+	:param gffPath: path to the GFF-formatted annotation file
+	:param fastaPath: path to the FASTA-formatted genome file that gffPath is based off of
+	:return: writes a GFF3-formatted file to the same directory as gffPath
+	"""
+	print('Reformatting GFF file...')
+	
+	toWritePath = gffPath + '3'
+	seqs = generateSeqRegs(fastaPath)
+	dataToWrite = []
+	
+	# Reformat each line of gff file
+	with open(gffPath, 'r') as gffFile:
+		for line in gffFile:
+			line = line.strip().split('\t')
+			temp = ''
+			line[8] = line[8].split(';')
+			for item in line[8]:
+				item = item.split()
+				temp += item[0].capitalize() + '=' + ' '.join(item[1:]) + ';'
+			line[8] = temp
+			dataToWrite.append('\t'.join(line))
+			
+	# Write everything to output file
+	with open(toWritePath, 'w') as f:
+		f.write('##gff-version 3\n')
+		for s in seqs: f.write(s + '\n')
+		for datum in dataToWrite: f.write(datum + '\n')
+	
+	print('Finished!\n')
