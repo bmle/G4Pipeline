@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject: Utils.py
+# G4Pipeline: Utils.py
 # Utilities for manipulating GFF, FASTA, and SAM files
 # =============================================================================
 

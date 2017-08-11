@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject: BedToGff.py
+# G4Pipeline: BedToGff.py
 # Reformats a QuadBase2-outputted BED file into a easier-parsable GFF file
 # =============================================================================
 

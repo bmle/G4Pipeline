@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject: NearestAnnot.py
+# G4Pipeline: NearestAnnot.py
 # Finds the nearest annotation to each Gplex
 # =============================================================================
 

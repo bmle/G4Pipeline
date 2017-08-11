@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject: NonAlignments.py
+# G4Pipeline: NonAlignments.py
 # Generates a 'non-alignment' file from a SAM file
 # =============================================================================
 

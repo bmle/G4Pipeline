@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject: Splitter.py
+# G4Pipeline: Splitter.py
 # Splits FASTA files into smaller-sized chunks to feed into applications that have limited file sizes
 # =============================================================================
 

@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject: GeneOverlap.py
+# G4Pipeline: GeneOverlap.py
 # Given gene annotations, gplex annotations, and non-alignment annotations,
 # generate a GFF file of genes that overlap at least one gplex and at least one
 # non-alignment at the same position.

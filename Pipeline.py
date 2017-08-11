@@ -1,6 +1,6 @@
 # =============================================================================
 # bmle
-# GplexProject: Pipeline.py
+# G4Pipeline: Pipeline.py
 # A wrapper module to run through all modules in the G4 annotation pipeline
 # =============================================================================
 
