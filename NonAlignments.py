@@ -64,7 +64,7 @@ def main(alignPath):
 	
 	# Writes to GFF file
 	print('Writing to file...')
-	outputPath = alignPath[:-3] + '.gff3'
+	outputPath = alignPath[:-3] + 'gff3'
 	with open(outputPath, 'w') as outFile:
 		outFile.write('##gff-version 3\n')
 		for k,v in seqs.items(): outFile.write('##sequence-region ' + k + ' 1 ' + v)
